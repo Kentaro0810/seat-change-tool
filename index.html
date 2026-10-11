@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0d2342">
+  <title>席替えツール</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap hero-inner">
+      <div>
+        <p class="eyebrow">SEAT SHUFFLE</p>
+        <h1>席替えツール</h1>
+        <p class="lead">人数に合う座席表を自動作成し、条件を守ってランダムに配置します。</p>
+      </div>
+      <div class="badge">保存はこの端末内</div>
+    </div>
+  </header>
+
+  <main class="wrap layout">
+    <section class="panel settings" aria-labelledby="inputTitle">
+      <div class="section-heading">
+        <div><span class="step">1</span><h2 id="inputTitle">クラス名簿</h2></div>
+        <span id="nameCount" class="count">0人</span>
+      </div>
+      <label for="names">1行に1人ずつ入力</label>
+      <textarea id="names" rows="10" placeholder="例：&#10;山田 太郎&#10;佐藤 花子&#10;鈴木 一郎"></textarea>
+      <p class="hint">空行は無視します。同じ名前は登録できません。</p>
+
+      <div class="section-heading spaced">
+        <div><span class="step">2</span><h2>座席の並び</h2></div>
+      </div>
+      <div class="control-grid">
+        <label class="field">列数
+          <select id="columnMode">
+            <option value="auto">自動で最適化</option>
+            <option value="manual">自分で指定</option>
+          </select>
+        </label>
+        <label id="manualColumnsWrap" class="field hidden">横の列数
+          <input id="manualColumns" type="number" min="2" max="12" value="5">
+        </label>
+      </div>
+      <p id="layoutPreview" class="layout-preview">名前を入力すると配置を計算します。</p>
+
+      <div class="section-heading spaced">
+        <div><span class="step">3</span><h2>条件設定</h2></div>
+      </div>
+      <div class="tabs" role="tablist" aria-label="条件の種類">
+        <button class="tab active" data-tab="front" type="button">前方指定</button>
+        <button class="tab" data-tab="block" type="button">ブロック</button>
+        <button class="tab" data-tab="neighbor" type="button">隣</button>
+      </div>
+
+      <div id="frontPanel" class="condition-panel active">
+        <p class="condition-desc">特定の人を、前から指定した行までの範囲に配置します。</p>
+        <div class="condition-form three">
+          <select id="frontPerson" aria-label="前方指定する人"></select>
+          <select id="frontRows" aria-label="前から何行目まで"></select>
+          <button id="addFront" class="secondary" type="button">追加</button>
+        </div>
+        <div id="frontList" class="rule-list"></div>
+      </div>
+
+      <div id="blockPanel" class="condition-panel">
+        <p class="condition-desc">指定した2人を、前後・左右・斜めを含む周囲8席に置きません。</p>
+        <div class="condition-form three">
+          <select id="blockA" aria-label="ブロックする1人目"></select>
+          <select id="blockB" aria-label="ブロックする2人目"></select>
+          <button id="addBlock" class="secondary" type="button">追加</button>
+        </div>
+        <div id="blockList" class="rule-list"></div>
+      </div>
+
+      <div id="neighborPanel" class="condition-panel">
+        <p class="condition-desc">指定した2人を、同じ行の左右に必ず並べます。</p>
+        <div class="condition-form three">
+          <select id="neighborA" aria-label="隣にする1人目"></select>
+          <select id="neighborB" aria-label="隣にする2人目"></select>
+          <button id="addNeighbor" class="secondary" type="button">追加</button>
+        </div>
+        <div id="neighborList" class="rule-list"></div>
+      </div>
+
+      <div id="message" class="message" role="alert" aria-live="polite"></div>
+      <div class="actions">
+        <button id="shuffle" class="primary" type="button">席替えを実行</button>
+        <button id="clearAll" class="ghost" type="button">すべて初期化</button>
+      </div>
+    </section>
+
+    <section class="panel result" aria-labelledby="resultTitle">
+      <div class="section-heading">
+        <div><span class="step">4</span><h2 id="resultTitle">座席表</h2></div>
+        <button id="reshuffle" class="small-button" type="button" disabled>もう一度</button>
+      </div>
+      <div class="board-top">黒板・教卓側</div>
+      <div id="seatArea" class="seat-area empty-state">
+        <p>名簿を入力して「席替えを実行」を押してください。</p>
+      </div>
+      <div class="orientation"><span>窓側</span><span>廊下側</span></div>
+      <div class="legend">
+        <span><i class="dot normal"></i>通常席</span>
+        <span><i class="dot front"></i>前方指定</span>
+        <span><i class="dot empty"></i>空席</span>
+      </div>
+    </section>
+  </main>
+
+  <footer>席替えツール v1.0.0</footer>
+  <script src="script.js"></script>
+</body>
+</html>
