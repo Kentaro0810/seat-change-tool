@@ -49,16 +49,16 @@
         <div><span class="step">3</span><h2>条件設定</h2></div>
       </div>
       <div class="tabs" role="tablist" aria-label="条件の種類">
-        <button class="tab active" data-tab="front" type="button">前方指定</button>
+        <button class="tab active" data-tab="front" type="button">前列指定</button>
         <button class="tab" data-tab="block" type="button">ブロック</button>
         <button class="tab" data-tab="neighbor" type="button">隣</button>
       </div>
 
       <div id="frontPanel" class="condition-panel active">
-        <p class="condition-desc">特定の人を、前から指定した行までの範囲に配置します。</p>
+        <p class="condition-desc">特定の人を、前から指定した列までの範囲に配置します。</p>
         <div class="condition-form three">
-          <select id="frontPerson" aria-label="前方指定する人"></select>
-          <select id="frontRows" aria-label="前から何行目まで"></select>
+          <select id="frontPerson" aria-label="前列指定する人"></select>
+          <select id="frontRows" aria-label="前から何列目まで"></select>
           <button id="addFront" class="secondary" type="button">追加</button>
         </div>
         <div id="frontList" class="rule-list"></div>
@@ -75,7 +75,7 @@
       </div>
 
       <div id="neighborPanel" class="condition-panel">
-        <p class="condition-desc">指定した2人を、同じ行の左右に必ず並べます。</p>
+        <p class="condition-desc">指定した2人を、同じ横並びの左右に必ず隣接させます。2人を選んだだけでも、席替え実行時に自動で条件へ反映されます。</p>
         <div class="condition-form three">
           <select id="neighborA" aria-label="隣にする1人目"></select>
           <select id="neighborB" aria-label="隣にする2人目"></select>
@@ -103,13 +103,13 @@
       <div class="orientation"><span>窓側</span><span>廊下側</span></div>
       <div class="legend">
         <span><i class="dot normal"></i>通常席</span>
-        <span><i class="dot front"></i>前方指定</span>
+        <span><i class="dot front"></i>前列指定</span>
         <span><i class="dot empty"></i>空席</span>
       </div>
     </section>
   </main>
 
-  <footer>席替えツール v1.0.0</footer>
+  <footer>席替えツール v1.1.0</footer>
   <script src="script.js"></script>
 </body>
 </html>
