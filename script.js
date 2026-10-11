@@ -40,7 +40,22 @@ function applyPendingConditions(){
   }
   renderRules();save();
 }
+function invalidateResult(){
+  state.last=null;
+  els.seatArea.className="seat-area empty-state";
+  els.seatArea.removeAttribute("style");
+  els.seatArea.innerHTML="<p>名簿または条件が変更されました。もう一度「席替えを実行」を押してください。</p>";
+  els.reshuffle.disabled=true;
+}
 function verifyResult(result){
+  const roster=names();
+  const seated=result.seats.filter(Boolean);
+  if(result.seats.length!==result.cols*result.rows)throw new Error("座席枠の数が正しくありません。");
+  if(seated.length!==roster.length)throw new Error(`名簿は${roster.length}人ですが、座席表は${seated.length}人です。結果を破棄しました。`);
+  if(new Set(seated).size!==seated.length)throw new Error("同じ名前が複数の席に配置されました。結果を破棄しました。");
+  const missing=roster.filter(n=>!seated.includes(n));
+  const unknown=seated.filter(n=>!roster.includes(n));
+  if(missing.length||unknown.length)throw new Error(`名簿と座席表が一致しません。${missing.length?" 未配置："+missing.join("、"):""}${unknown.length?" 名簿外："+unknown.join("、"):""}`);
   const pos=new Map();
   result.seats.forEach((n,i)=>{if(n)pos.set(n,{row:Math.floor(i/result.cols),col:i%result.cols})});
   for(const r of state.front){const p=pos.get(r.person);if(!p||p.row>=r.maxRow)throw new Error(`前列指定が反映されませんでした：${r.person}`)}
@@ -54,7 +69,7 @@ function solve(){const list=names(),dups=duplicateNames(list);if(list.length<2)t
  function candidates(group){if(group.length===2){const out=[];for(let i=0;i<total-1;i++){if(i%cols===cols-1||seats[i]||seats[i+1])continue;if(validPerson(group[0],i)&&validPerson(group[1],i+1))out.push([i,i+1]);if(validPerson(group[1],i)&&validPerson(group[0],i+1))out.push([i+1,i])}return shuffle(out)}const out=[];for(let i=0;i<total;i++)if(!seats[i]&&validPerson(group[0],i))out.push([i]);return shuffle(out)}
  let nodes=0;function backtrack(gi){if(++nodes>250000)return false;if(gi===groups.length)return true;const g=groups[gi];for(const idxs of candidates(g)){for(let k=0;k<g.length;k++){seats[idxs[k]]=g[k];positions.set(g[k],idxs[k])}if(backtrack(gi+1))return true;for(let k=0;k<g.length;k++){seats[idxs[k]]=null;positions.delete(g[k])}}return false}
  if(!backtrack(0))throw new Error("すべての条件を満たす席配置を作れませんでした。列数を変えるか、条件を減らしてください。");const result={seats,cols,rows,frontMap};verifyResult(result);return result}
-function renderResult(result){state.last=result;els.seatArea.classList.remove("empty-state");els.seatArea.innerHTML=result.seats.map((n,i)=>{const row=Math.floor(i/result.cols)+1,col=i%result.cols+1;if(!n)return `<div class="seat empty-seat"><span class="seat-number">${row}-${col}</span>空席</div>`;const cls=result.frontMap.has(n)?"seat front-rule":"seat";return `<div class="${cls}"><span class="seat-number">${row}-${col}</span>${escapeHtml(n)}</div>`}).join("");els.seatArea.style.gridTemplateColumns=`repeat(${result.cols},minmax(88px,1fr))`;els.reshuffle.disabled=false}
+function renderResult(result){state.last=result;els.seatArea.classList.remove("empty-state");els.seatArea.innerHTML=result.seats.map((n,i)=>{const row=Math.floor(i/result.cols)+1,col=i%result.cols+1;if(!n)return `<div class="seat empty-seat"><span class="seat-number">${row}-${col}</span>空席</div>`;const cls=result.frontMap.has(n)?"seat front-rule":"seat";return `<div class="${cls}"><span class="seat-number">${row}-${col}</span>${escapeHtml(n)}</div>`}).join("");els.seatArea.style.gridTemplateColumns=`repeat(${result.cols},minmax(0,1fr))`;els.reshuffle.disabled=false}
 function run(){
   try{
     applyPendingConditions();
@@ -64,10 +79,10 @@ function run(){
     if(state.neighbors.length)details.push(`隣指定 ${state.neighbors.map(p=>`${p.a}・${p.b}`).join("、")}`);
     if(state.blocks.length)details.push(`ブロック ${state.blocks.length}組`);
     if(state.front.length)details.push(`前列指定 ${state.front.length}人`);
-    show(`条件を再検証して座席表を作成しました。${details.length?"（"+details.join("／")+"）":""}`,"success",false);
+    show(`全${result.seats.filter(Boolean).length}人を配置し、条件を再検証しました。${details.length?"（"+details.join("／")+"）":""}`,"success",false);
   }catch(e){show(e.message,"error")}
 }
-function clearAll(){if(!confirm("名簿・条件・結果をすべて初期化しますか？"))return;els.names.value="";state.front=[];state.blocks=[];state.neighbors=[];state.last=null;els.seatArea.className="seat-area empty-state";els.seatArea.removeAttribute("style");els.seatArea.innerHTML="<p>名簿を入力して「席替えを実行」を押してください。</p>";els.reshuffle.disabled=true;renderRules();updateLayout();localStorage.removeItem("seatShuffleData_v120")}
-function save(){localStorage.setItem("seatShuffleData_v120",JSON.stringify({names:els.names.value,columnMode:els.columnMode.value,manualColumns:els.manualColumns.value,front:state.front,blocks:state.blocks,neighbors:state.neighbors}))}
-function load(){try{const d=JSON.parse(localStorage.getItem("seatShuffleData_v120"));if(!d)return;els.names.value=d.names||"";els.columnMode.value=d.columnMode||"auto";els.manualColumns.value=d.manualColumns||5;state.front=d.front||[];state.blocks=d.blocks||[];state.neighbors=d.neighbors||[]}catch{}}
-els.names.addEventListener("input",()=>{updateLayout();save()});els.columnMode.addEventListener("change",()=>{els.manualColumnsWrap.classList.toggle("hidden",els.columnMode.value!=="manual");updateLayout();save()});els.manualColumns.addEventListener("input",()=>{updateLayout();save()});$("addFront").onclick=()=>{addFront();save()};$("addBlock").onclick=()=>{addPair("blocks","blockA","blockB");save()};$("addNeighbor").onclick=()=>{addPair("neighbors","neighborA","neighborB");save()};$("shuffle").onclick=run;els.reshuffle.onclick=run;$("clearAll").onclick=clearAll;document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===t));document.querySelectorAll(".condition-panel").forEach(p=>p.classList.toggle("active",p.id===`${t.dataset.tab}Panel`))});window.addEventListener("beforeunload",save);load();els.manualColumnsWrap.classList.toggle("hidden",els.columnMode.value!=="manual");updateLayout();renderRules();
+function clearAll(){if(!confirm("名簿・条件・結果をすべて初期化しますか？"))return;els.names.value="";state.front=[];state.blocks=[];state.neighbors=[];state.last=null;els.seatArea.className="seat-area empty-state";els.seatArea.removeAttribute("style");els.seatArea.innerHTML="<p>名簿を入力して「席替えを実行」を押してください。</p>";els.reshuffle.disabled=true;renderRules();updateLayout();localStorage.removeItem("seatShuffleData_v130")}
+function save(){localStorage.setItem("seatShuffleData_v130",JSON.stringify({names:els.names.value,columnMode:els.columnMode.value,manualColumns:els.manualColumns.value,front:state.front,blocks:state.blocks,neighbors:state.neighbors}))}
+function load(){try{const d=JSON.parse(localStorage.getItem("seatShuffleData_v130"));if(!d)return;els.names.value=d.names||"";els.columnMode.value=d.columnMode||"auto";els.manualColumns.value=d.manualColumns||5;state.front=d.front||[];state.blocks=d.blocks||[];state.neighbors=d.neighbors||[]}catch{}}
+els.names.addEventListener("input",()=>{invalidateResult();updateLayout();save()});els.columnMode.addEventListener("change",()=>{invalidateResult();els.manualColumnsWrap.classList.toggle("hidden",els.columnMode.value!=="manual");updateLayout();save()});els.manualColumns.addEventListener("input",()=>{invalidateResult();updateLayout();save()});$("addFront").onclick=()=>{addFront();save()};$("addBlock").onclick=()=>{addPair("blocks","blockA","blockB");save()};$("addNeighbor").onclick=()=>{addPair("neighbors","neighborA","neighborB");save()};$("shuffle").onclick=run;els.reshuffle.onclick=run;$("clearAll").onclick=clearAll;document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===t));document.querySelectorAll(".condition-panel").forEach(p=>p.classList.toggle("active",p.id===`${t.dataset.tab}Panel`))});window.addEventListener("beforeunload",save);load();els.manualColumnsWrap.classList.toggle("hidden",els.columnMode.value!=="manual");updateLayout();renderRules();
