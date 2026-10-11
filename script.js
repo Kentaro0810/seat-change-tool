@@ -137,3 +137,60 @@ function load(){
   Object.keys(localStorage).filter(key=>key.startsWith("seatShuffleData_")).forEach(key=>localStorage.removeItem(key));
 }
 els.names.addEventListener("input",()=>{invalidateResult();updateLayout();save()});els.columnMode.addEventListener("change",()=>{invalidateResult();els.manualColumnsWrap.classList.toggle("hidden",els.columnMode.value!=="manual");updateLayout();save()});els.manualColumns.addEventListener("input",()=>{invalidateResult();updateLayout();save()});$("addFront").onclick=()=>{addFront();save()};$("addBlock").onclick=()=>{addPair("blocks","blockA","blockB");save()};$("addNeighbor").onclick=()=>{addPair("neighbors","neighborA","neighborB");save()};$("shuffle").onclick=run;els.reshuffle.onclick=run;$("clearAll").onclick=clearAll;$("clearCache").onclick=clearBrowserCache;els.seatArea.addEventListener("click",handleSeatTap);document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===t));document.querySelectorAll(".condition-panel").forEach(p=>p.classList.toggle("active",p.id===`${t.dataset.tab}Panel`))});window.addEventListener("beforeunload",save);load();els.manualColumnsWrap.classList.toggle("hidden",els.columnMode.value!=="manual");updateLayout();renderRules();
+
+
+// v1.5.0: 完成した座席表をPNG画像として保存
+(function(){
+  const btn=document.getElementById("saveImage");
+  const area=document.getElementById("seatArea");
+  if(!btn||!area)return;
+  const update=()=>{btn.disabled=!area.querySelector(".seat")};
+  new MutationObserver(update).observe(area,{childList:true,subtree:true});
+  update();
+
+  function roundRect(ctx,x,y,w,h,r){
+    r=Math.min(r,w/2,h/2);ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
+  }
+  function fitText(ctx,text,maxWidth,startSize){
+    let size=startSize;while(size>12&&ctx.measureText(text).width>maxWidth){size--;}return size;
+  }
+  btn.addEventListener("click",()=>{
+    const seats=[...area.querySelectorAll(".seat")];
+    if(!seats.length)return;
+    const areaRect=area.getBoundingClientRect();
+    const scale=2;
+    const pad=38, titleH=76, boardH=54, bottomH=62;
+    const contentW=Math.max(area.scrollWidth,areaRect.width);
+    const contentH=Math.max(area.scrollHeight,areaRect.height);
+    const canvas=document.createElement("canvas");
+    canvas.width=Math.ceil((contentW+pad*2)*scale);
+    canvas.height=Math.ceil((titleH+boardH+contentH+bottomH+pad*2)*scale);
+    const ctx=canvas.getContext("2d");ctx.scale(scale,scale);
+    const W=canvas.width/scale,H=canvas.height/scale;
+    ctx.fillStyle="#ffffff";ctx.fillRect(0,0,W,H);
+    ctx.fillStyle="#173756";ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="900 30px sans-serif";ctx.fillText("席替え表",W/2,pad+25);
+    const bx=W/2-Math.min(180,contentW*.35),by=pad+titleH-17,bw=Math.min(360,contentW*.7),bh=42;
+    ctx.fillStyle="#315b4b";roundRect(ctx,bx,by,bw,bh,9);ctx.fill();ctx.fillStyle="#fff";ctx.font="700 17px sans-serif";ctx.fillText("黒板・教卓側",W/2,by+bh/2);
+    const ox=pad,oy=pad+titleH+boardH;
+    ctx.fillStyle="#f8fbff";roundRect(ctx,ox,oy,contentW,contentH,18);ctx.fill();ctx.strokeStyle="#cbd8e7";ctx.lineWidth=2;ctx.stroke();
+    seats.forEach((seat,i)=>{
+      const r=seat.getBoundingClientRect();
+      const x=ox+(r.left-areaRect.left)+area.scrollLeft;
+      const y=oy+(r.top-areaRect.top)+area.scrollTop;
+      const w=r.width,h=r.height;
+      const empty=seat.classList.contains("empty-seat"),front=seat.classList.contains("front-rule");
+      ctx.fillStyle=empty?"#f1f4f8":front?"#eaf5ff":"#ffffff";
+      ctx.strokeStyle=empty?"#8b98a8":front?"#2e75b6":"#cbd8e7";
+      ctx.lineWidth=2;roundRect(ctx,x,y,w,h,12);ctx.fill();ctx.stroke();
+      const number=seat.querySelector(".seat-number")?.textContent||`${i+1}`;
+      const raw=[...seat.childNodes].filter(n=>n.nodeType===Node.TEXT_NODE).map(n=>n.textContent).join(" ").trim();
+      const name=raw|| (empty?"空席":"");
+      ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#8694a5";ctx.font="700 12px sans-serif";ctx.fillText(number,x+w/2,y+15);
+      ctx.fillStyle=empty?"#8b98a8":"#173756";ctx.font=`900 ${fitText(ctx,name,w-16,18)}px sans-serif`;ctx.fillText(name,x+w/2,y+h/2+9);
+    });
+    ctx.fillStyle="#718096";ctx.font="700 14px sans-serif";ctx.textAlign="left";ctx.fillText("窓側",ox,oy+contentH+30);ctx.textAlign="right";ctx.fillText("廊下側",ox+contentW,oy+contentH+30);
+    const d=new Date(),z=n=>String(n).padStart(2,"0");
+    const filename=`席替え表_${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}_${z(d.getHours())}-${z(d.getMinutes())}.png`;
+    const link=document.createElement("a");link.download=filename;link.href=canvas.toDataURL("image/png");link.click();
+  });
+})();

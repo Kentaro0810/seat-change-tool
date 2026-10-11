@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0d2342">
   <title>席替えツール</title>
-  <link rel="stylesheet" href="style.css?v=141">
+  <link rel="stylesheet" href="style.css?v=150">
 </head>
 <body>
   <header class="hero">
@@ -15,7 +15,7 @@
         <h1>席替えツール</h1>
         <p class="lead">人数に合う座席表を自動作成し、条件を守ってランダムに配置します。</p>
       </div>
-      <div class="badge">v1.4.1｜入力内容は保存されません</div>
+      <div class="badge">v1.5.0｜画像保存対応・入力内容は保存されません</div>
     </div>
   </header>
 
@@ -95,7 +95,7 @@
     <section class="panel result" aria-labelledby="resultTitle">
       <div class="section-heading">
         <div><span class="step">4</span><h2 id="resultTitle">座席表</h2></div>
-        <button id="reshuffle" class="small-button" type="button" disabled>もう一度</button>
+        <div class="result-buttons"><button id="saveImage" class="small-button save-image" type="button" disabled>画像で保存</button><button id="reshuffle" class="small-button" type="button" disabled>もう一度</button></div>
       </div>
       <div class="board-top">黒板・教卓側</div>
       <p class="swap-help">座席表の席を1つタップし、続けて別の席をタップすると入れ替えられます。人同士・人と空席の両方に対応しています。</p>
@@ -111,7 +111,7 @@
     </section>
   </main>
 
-  <footer>席替えツール v1.4.1</footer>
-  <script src="script.js?v=141"></script>
+  <footer>席替えツール v1.5.0</footer>
+  <script src="script.js?v=150"></script>
 </body>
 </html>
